@@ -80,7 +80,7 @@ sys_nice(void)
 {
   int pid, prio;
 
-  if (argint(0, &pid) < 0 || argint(1, &prio) < 0 || prio >= NPRIO)
+  if (argint(0, &pid) < 0 || argint(1, &prio) < 0 || prio < 0 || prio >= NPRIO)
     return -1;
 
   return nice(pid, prio);
