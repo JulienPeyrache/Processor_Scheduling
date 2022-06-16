@@ -606,30 +606,33 @@ void scheduler(void)
   //   }
   // }
 
-  intr_on();
-
-  intr_off();
-
-  p = pick_highest_priority_runnable_proc();
-
-  if (p != 0)
+  for (;;)
   {
-    p->state = RUNNING;
-    c->proc = p;
+    intr_on();
 
-    remove_from_prio_queue(p);
-    insert_into_prio_queue(p);
+    intr_off();
 
-    swtch(&c->scheduler, &p->context);
+    p = pick_highest_priority_runnable_proc();
 
-    c->proc = 0;
-    c->intena = 0;
-    release(&p->lock);
-    release(&prio_lock);
-  }
-  else
-  {
-    asm volatile("wfi");
+    if (p != 0)
+    {
+      p->state = RUNNING;
+      c->proc = p;
+
+      remove_from_prio_queue(p);
+      insert_into_prio_queue(p);
+
+      swtch(&c->scheduler, &p->context);
+
+      c->proc = 0;
+      c->intena = 0;
+      release(&p->lock);
+      release(&prio_lock);
+    }
+    else
+    {
+      asm volatile("wfi");
+    }
   }
 }
 
