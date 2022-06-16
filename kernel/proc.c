@@ -874,6 +874,7 @@ int nice(int pid, int priority)
 
   for (p = proc; p < &proc[NPROC]; p++)
   {
+    acquire(&prio_lock);
     acquire(&p->lock);
 
     if (p->pid == pid)
@@ -883,10 +884,12 @@ int nice(int pid, int priority)
       insert_into_prio_queue(p);
 
       release(&p->lock);
+      release(&prio_lock);
 
       return 1;
     }
     release(&p->lock);
+    release(&prio_lock);
   }
   return 0;
 }
