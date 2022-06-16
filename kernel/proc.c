@@ -609,6 +609,7 @@ void scheduler(void)
   for (;;)
   {
     intr_on();
+
     intr_off();
 
     p = pick_highest_priority_runnable_proc();
