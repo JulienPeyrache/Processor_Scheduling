@@ -875,6 +875,7 @@ int nice(int pid, int priority)
   for (p = proc; p < &proc[NPROC]; p++)
   {
     acquire(&prio_lock);
+
     acquire(&p->lock);
 
     if (p->pid == pid)
