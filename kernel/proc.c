@@ -564,46 +564,72 @@ void scheduler(void)
   struct cpu *c = mycpu();
 
   c->proc = 0;
-  for (;;)
+  // for (;;)
+  // {
+  //   // Avoid deadlock by giving devices a chance to interrupt.
+  //   intr_on();
+
+  //   // Run the for loop with interrupts off to avoid
+  //   // a race between an interrupt and WFI, which would
+  //   // cause a lost wakeup.
+  //   intr_off();
+
+  //   int found = 0;
+  //   for (p = proc; p < &proc[NPROC]; p++)
+  //   {
+  //     acquire(&p->lock);
+  //     if (p->state == RUNNABLE)
+  //     {
+  //       // Switch to chosen process.  It is the process's job
+  //       // to release its lock and then reacquire it
+  //       // before jumping back to us.
+  //       p->state = RUNNING;
+  //       c->proc = p;
+  //       swtch(&c->scheduler, &p->context);
+
+  //       // Process is done running for now.
+  //       // It should have changed its p->state before coming back.
+  //       c->proc = 0;
+
+  //       found = 1;
+  //     }
+
+  //     // ensure that release() doesn't enable interrupts.
+  //     // again to avoid a race between interrupt and WFI.
+  //     c->intena = 0;
+
+  //     release(&p->lock);
+  //   }
+  //   if (found == 0)
+  //   {
+  //     asm volatile("wfi");
+  //   }
+  // }
+
+  intr_on();
+
+  intr_off();
+
+  p = pick_highest_priority_runnable_proc();
+
+  if (p != 0)
   {
-    // Avoid deadlock by giving devices a chance to interrupt.
-    intr_on();
+    p->state = RUNNING;
+    c->proc = p;
 
-    // Run the for loop with interrupts off to avoid
-    // a race between an interrupt and WFI, which would
-    // cause a lost wakeup.
-    intr_off();
+    remove_from_prio_queue(p);
+    insert_into_prio_queue(p);
 
-    int found = 0;
-    for (p = proc; p < &proc[NPROC]; p++)
-    {
-      acquire(&p->lock);
-      if (p->state == RUNNABLE)
-      {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->scheduler, &p->context);
+    swtch(&c->scheduler, &p->context);
 
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-
-        found = 1;
-      }
-
-      // ensure that release() doesn't enable interrupts.
-      // again to avoid a race between interrupt and WFI.
-      c->intena = 0;
-
-      release(&p->lock);
-    }
-    if (found == 0)
-    {
-      asm volatile("wfi");
-    }
+    c->proc = 0;
+    c->intena = 0;
+    release(&p->lock);
+    release(&prio_lock);
+  }
+  else
+  {
+    asm volatile("wfi");
   }
 }
 
