@@ -543,6 +543,8 @@ struct proc *pick_highest_priority_runnable_proc()
         return l->p;
       }
       release(&l->p->lock);
+
+      l = l->next;
     }
   }
   release(&prio_lock);
