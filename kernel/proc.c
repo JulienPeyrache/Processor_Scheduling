@@ -622,12 +622,13 @@ void scheduler(void)
       remove_from_prio_queue(p);
       insert_into_prio_queue(p);
 
+      release(&prio_lock);
+
       swtch(&c->scheduler, &p->context);
 
       c->proc = 0;
       c->intena = 0;
       release(&p->lock);
-      release(&prio_lock);
     }
     else
     {
